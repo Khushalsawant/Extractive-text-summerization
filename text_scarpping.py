@@ -40,6 +40,20 @@ if page.status_code == 200:
     soup.find_all('p')
     for i in range(len(soup.find_all('p'))):
         extracted_str = extracted_str +soup.find_all('p')[i].get_text()
+    if extracted_str.find('[79]') != -1:
+        print(extracted_str.replace("[79]",""))
+    print(len(extracted_str))
+
+spl_chr_list = []
+for i in range(101):
+    spl_chr = "[" + str(i) + "]"
+    spl_chr_list.append(spl_chr)
+
+for char in spl_chr_list:
+    print("char = ",char)
+    if extracted_str.find(char) != -1:
+        extracted_str.replace(char,"")
+        print(extracted_str)
         
 #print(ETF.content.split("."))
 #print(type(ETF.content))
