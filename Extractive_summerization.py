@@ -5,6 +5,9 @@ Created on Mon Sep  9 06:57:44 2019
 @author: khushal
 """
 
+import requests
+from bs4 import BeautifulSoup
+
 import nltk
 import os
 import re
@@ -76,6 +79,11 @@ def word_tfidf(dict_freq,word,sentences,sentence):
     tf = tf_score(word,sentence)
     idf = idf_score(len(sentences),word,sentences)
     tf_idf = tf_idf_score(tf,idf)
+    '''
+    print("tf = ",round(tf,2))
+    print("idf = ",round(idf,2))
+    print("tf_idf = ",tf_idf)
+    '''
     return tf_idf
 def sentence_importance(sentence,dict_freq,sentences):
      sentence_score = 0
@@ -90,10 +98,43 @@ def sentence_importance(sentence,dict_freq,sentences):
                 word = wordlemmatizer.lemmatize(word)
                 sentence_score = sentence_score + word_tfidf(dict_freq,word,sentences,sentence)
      return sentence_score
-file = 'input.txt'
-file = open(file , 'r')
-text = file.read()
+'''
+extracted_str = "/n"
+page = requests.get("https://www.investopedia.com/terms/e/etf.asp")
+if page.status_code == 200:
+    #print(page.content)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    #print(soup.prettify())
+    soup.find_all('p')
+    for i in range(len(soup.find_all('p'))):
+        extracted_str = extracted_str + soup.find_all('p')[i].get_text()
+'''
+
+
+import wikipedia
+import requests
+from bs4 import BeautifulSoup
+from nltk.tokenize import sent_tokenize
+
+extracted_str = "/n"
+#print(wikipedia.summary("ETF"))
+ETF = wikipedia.page("ETF")
+print(ETF.url)
+extracted_list = []
+page = requests.get(ETF.url)
+if page.status_code == 200:
+    #print(page.content)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    #print(soup.prettify())
+    soup.find_all('p')
+    for i in range(len(soup.find_all('p'))):
+        extracted_str = extracted_str +soup.find_all('p')[i].get_text()
+
+
+text = extracted_str
+
 tokenized_sentence = sent_tokenize(text)
+print(" Length of tokenized_sentence",len(tokenized_sentence))
 text = remove_special_characters(str(text))
 text = re.sub(r'\d+', '', text)
 tokenized_words_with_stopwords = word_tokenize(text)
@@ -102,9 +143,11 @@ tokenized_words = [word for word in tokenized_words if len(word) > 1]
 tokenized_words = [word.lower() for word in tokenized_words]
 tokenized_words = lemmatize_words(tokenized_words)
 word_freq = freq(tokenized_words)
-input_user = int(input('Percentage of information to retain(in percent):'))
+
+input_user = 30 #int(input('Percentage of information to retain(in percent):'))
+print(" Percentage of information to retain(in percent): ",input_user)
 no_of_sentences = int((input_user * len(tokenized_sentence))/100)
-print(no_of_sentences)
+print(" no_of_sentences = ",no_of_sentences)
 c = 1
 sentence_with_importance = {}
 for sent in tokenized_sentence:
@@ -131,5 +174,7 @@ summary = " ".join(summary)
 print("\n")
 print("Summary:")
 print(summary)
+'''
 outF = open('summary.txt',"w")
 outF.write(summary)
+'''
