@@ -5,6 +5,8 @@ Created on Mon Sep  9 06:57:44 2019
 @author: khushal
 """
 
+from tkinter import *
+
 
 import time
 # into hours, minutes and seconds 
@@ -192,12 +194,17 @@ def summarized_data_from_wiki(input_str):
 
     return summary,no_of_sentences_in_summary
 
+def write_extracted_data_in_file(extracted_data):
+    file = open("extractive_summarization_output_data_file.txt", "w")
+    file.write(extracted_data) 
+    file.close()
+
 if __name__ == "__main__": 
     input_str = str(input('Enter the text/string for which yo want to get summarizd data := '))    
     summary,no_of_sentences_in_summary = summarized_data_from_wiki(input_str)
     print("Summary: \n",summary)
     print(" no_of_sentences In summary data from wiki = ",no_of_sentences_in_summary)
+    write_extracted_data_in_file(summary)
     
-    n =  time.time() - start_time
-        
+    n =  time.time() - start_time    
     print("---Execution Time ---",convert_sec(n))
