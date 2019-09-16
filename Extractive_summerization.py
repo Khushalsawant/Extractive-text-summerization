@@ -5,8 +5,6 @@ Created on Mon Sep  9 06:57:44 2019
 @author: khushal
 """
 
-from tkinter import *
-
 
 import time
 # into hours, minutes and seconds 
@@ -14,11 +12,20 @@ import datetime
 
 start_time = time.time()
 
+# Python program to illustrate the concept 
+# of threading 
+# importing the threading module 
+import threading 
+import os
+# importing the multiprocessing module 
+import multiprocessing 
+import logging
+
 import requests
 from bs4 import BeautifulSoup
 
 import wikipedia
-from langdetect import detect
+#from langdetect import detect
 
 import nltk
 import os
@@ -47,7 +54,7 @@ def stem_words(words):
 def remove_special_characters(text):
     regex = r'[^a-zA-Z0-9\s]'
     text = re.sub(regex,'',text)
-    return text
+    return text 
 def freq(words):
     words = [word.lower() for word in words]
     dict_freq = {}
@@ -74,6 +81,7 @@ def tf_score(word,sentence):
             word_frequency_in_sentence = word_frequency_in_sentence + 1
     tf =  word_frequency_in_sentence/ len_sentence
     return tf
+
 def idf_score(no_of_sentences,word,sentences):
     no_of_sentence_containing_word = 0
     for sentence in sentences:
@@ -87,8 +95,10 @@ def idf_score(no_of_sentences,word,sentences):
             no_of_sentence_containing_word = no_of_sentence_containing_word + 1
     idf = math.log10(no_of_sentences/no_of_sentence_containing_word)
     return idf
+
 def tf_idf_score(tf,idf):
     return tf*idf
+
 def word_tfidf(dict_freq,word,sentences,sentence):
     word_tfidf = []
     tf = tf_score(word,sentence)
@@ -100,6 +110,7 @@ def word_tfidf(dict_freq,word,sentences,sentence):
     print("tf_idf = ",tf_idf)
     '''
     return tf_idf
+
 def sentence_importance(sentence,dict_freq,sentences):
      sentence_score = 0
      sentence = remove_special_characters(str(sentence)) 
@@ -113,7 +124,6 @@ def sentence_importance(sentence,dict_freq,sentences):
                 word = wordlemmatizer.lemmatize(word)
                 sentence_score = sentence_score + word_tfidf(dict_freq,word,sentences,sentence)
      return sentence_score
-
 
 def summarized_data_from_wiki(input_str):
     extracted_str = "/n"
@@ -142,13 +152,11 @@ def summarized_data_from_wiki(input_str):
             if extracted_str.find(char) != -1:
                 extracted_str = extracted_str.replace(str(char),"")
                 extracted_str_list.append(extracted_str)
-    
-    
     text = extracted_str_list[-1]
-    
+    '''
     lang = detect(text) # lang = 'en' for an English email
     print("Extracted data in present in", lang)
-
+    '''
     tokenized_sentence = sent_tokenize(text)
     #print(" Length of tokenized_sentence",len(tokenized_sentence))
     
@@ -187,24 +195,62 @@ def summarized_data_from_wiki(input_str):
         if cnt in sentence_no:
            summary.append(sentence)
         cnt = cnt+1
-    summary = " ".join(summary)
-        
+    summary = " ".join(summary)    
     summary_tokenized_sentence = sent_tokenize(summary)
     no_of_sentences_in_summary = int((input_user * len(summary_tokenized_sentence))/100)
-
-    return summary,no_of_sentences_in_summary
+    print(" no_of_sentences In summary data from wiki = ",no_of_sentences_in_summary)
+    print("summary = \n ",summary)
+    #output.put(summary)
+    return  summary
 
 def write_extracted_data_in_file(extracted_data):
     file = open("extractive_summarization_output_data_file.txt", "w")
     file.write(extracted_data) 
     file.close()
 
+def main_task(input_str):
+    # Define an output queue
+    queue = multiprocessing.Queue()
+    
+    print("Task has been assigned to thread: {}".format(threading.current_thread().name))
+    print("multiprocessing.cpu_count() = ",multiprocessing.cpu_count())
+    print("the text/string for which you want to get summarizd data := ",input_str)
+    
+    with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:  
+        summary_list = pool.map(summarized_data_from_wiki,(input_str,))
+    
+    pool.close()
+    pool.join()
+    print("summary_list type = ",type(summary_list))
+    print("summary_list= ",summary_list)
+    '''
+    summary_process = multiprocessing.Process(target=summarized_data_from_wiki,args=(input_str,))
+    summary_process.start()
+    summary_process.join()
+    
+    print("summary_list type = ",type(summary_process))
+    '''
+    #print("summary = ", " ".join(summary_list) )
+
+def main_threading_task(input_str):
+    #summary,no_of_sentences_in_summary = summarized_data_from_wiki(input_str)
+    
+    summary_thread = threading.Thread(target=main_task,args=(input_str,),name='summarized_data_from_wiki') 
+    
+    summary_thread.start()
+    summary_thread.join()
+    
 if __name__ == "__main__": 
-    input_str = str(input('Enter the text/string for which yo want to get summarizd data := '))    
-    summary,no_of_sentences_in_summary = summarized_data_from_wiki(input_str)
-    print("Summary: \n",summary)
-    print(" no_of_sentences In summary data from wiki = ",no_of_sentences_in_summary)
-    write_extracted_data_in_file(summary)
+    
+    multiprocessing.log_to_stderr(logging.DEBUG)
+    logger = multiprocessing.get_logger()
+    logger.setLevel(logging.INFO)
+
+    print("ID of process running main program: {}".format(os.getpid())) 
+    print("Main thread name: {}".format(threading.main_thread().name)) 
+    input_str = "ETF" #str(input('Enter the text/string for which yo want to get summarizd data := '))    
+    main_threading_task(input_str)
+    #write_extracted_data_in_file(summary)
     
     n =  time.time() - start_time    
     print("---Execution Time ---",convert_sec(n))
